@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>lock password</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--muted:#666;--accent:#2563eb;--danger:#dc2626;}
+*{box-sizing:border-box;font-family:system-ui,"Noto Naskh Arabic",sans-serif}
+body{margin:0;background:var(--bg);padding:20px;display:flex;justify-content:center}
+.app{width:100%;max-width:900px}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.panel{background:var(--card);padding:14px;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.05);margin-bottom:12px}
+label{display:block;margin-bottom:4px;font-size:13px;color:var(--muted)}
+input,textarea,select{width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+button{padding:8px 12px;border:0;border-radius:8px;background:var(--accent);color:#fff;font-weight:600;cursor:pointer}
+button.ghost{background:#fff;color:var(--accent);border:1px solid #ddd}
+button.warn{background:var(--danger)}
+.mono{font-family:monospace;background:#f3f4f6;padding:4px 8px;border-radius:6px}
+.item{display:flex;justify-content:space-between;align-items:start;padding:10px;border:1px solid #eee;border-radius:8px;background:#fff}
+.meta{max-width:60%}
+.meta .site{font-weight:700}
+.meta .user{font-size:13px;color:var(--muted)}
+.meta .notes{font-size:12px;margin-top:4px;color:#333;white-space:pre-wrap}
+.actions{display:flex;flex-direction:column;gap:4px}
+@media(max-width:600px){.actions{flex-direction:row}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <h1>🔐 lock password</h1>
+  <button id="clearStorage" class="ghost small">إعادة ضبط</button>
+</header>
+
+<section class="panel">
+  <label>كلمة المرور الرئيسية (اختياري)</label>
+  <input id="masterInput" type="password" placeholder="أدخل كلمة مرور للتشفير (اختياري)">
+  <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+    <button id="unlockBtn">فتح</button>
+    <button id="lockBtn" class="ghost">قفل</button>
+  </div>
+  <div id="status" class="mono" style="margin-top:8px">مقفل</div>
+</section>
+
+<section class="panel" id="formPanel" style="display:none">
+  <form id="entryForm">
+    <div class="row">
+      <div style="flex:1">
+        <label>الموقع</label>
+        <input id="site" type="text" required>
+      </div>
+      <div style="flex:1">
+        <label>اسم المستخدم</label>
+        <input id="username" type="text">
+      </div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div style="flex:1">
+        <label>كلمة المرور</label>
+        <input id="password" type="text" required>
+      </div>
+      <div style="display:flex;gap:6px;align-items:flex-end">
+        <button type="button" id="genBtn" class="ghost">توليد</button>
+        <button type="button" id="copyPwd" class="ghost">نسخ</button>
+        <button type="submit">إضافة</button>
+      </div>
+    </div>
+    <label style="margin-top:8px">ملاحظات</label>
+    <textarea id="notes" rows="3"></textarea>
+  </form>
+</section>
+
+<section class="panel" id="listPanel" style="display:none">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <strong>مدخلاتك</strong>
+    <select id="filterSelect">
+      <option value="all">الكل</option>
+      <option value="recent">الأحدث</option>
+    </select>
+  </div>
+  <div id="entries" style="margin-top:10px;display:grid;gap:6px"></div>
+  <div id="emptyHint" style="color:#666;margin-top:8px;display:none">لا توجد مدخلات.</div>
+</section>
+</div>
+
+<script>
+const STORAGE_KEY='vault_entries',SALT_KEY='vault_salt';
+const enc=new TextEncoder(),dec=new TextDecoder();
+let entries=[],keyObj=null,editIndex=-1;
+function b64e(a){return btoa(String.fromCharCode(...new Uint8Array(a)));}
+function b64d(s){return Uint8Array.from(atob(s),c=>c.charCodeAt(0));}
+function randomBytes(n){const a=new Uint8Array(n);crypto.getRandomValues(a);return a;}
+async function deriveKey(p,s){const base=await crypto.subtle.importKey('raw',enc.encode(p),{name:'PBKDF2'},!1,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt:s,iterations:100000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},!1,['encrypt','decrypt']);}
+async function encryptWithKey(k,obj){const iv=randomBytes(12),ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},k,enc.encode(JSON.stringify(obj)));return b64e(iv)+'.'+b64e(ct);}
+async function decryptWithKey(k,blob){const[p1,p2]=blob.split('.');return JSON.parse(dec.decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b64d(p1)},k,b64d(p2))));}
+function savePlain(){localStorage.setItem(STORAGE_KEY,JSON.stringify(entries));}
+async function persist(){if(keyObj){localStorage.setItem(STORAGE_KEY,await encryptWithKey(keyObj.key,entries));}else savePlain();}
+async function load(pass){const blob=localStorage.getItem(STORAGE_KEY);if(!blob){entries=[];return;}
+if(pass){try{const salt=b64d(localStorage.getItem(SALT_KEY)),k=await deriveKey(pass,salt);entries=await decryptWithKey(k,blob);keyObj={key:k,salt};return;}catch{}}try{entries=JSON.parse(blob);}catch{entries=[];}}
+function render(){const e=document.getElementById('entries');e.innerHTML='';if(!entries.length){emptyHint.style.display='block';return;}emptyHint.style.display='none';let list=[...entries];if(filterSelect.value==='recent')list.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));list.forEach((it,i)=>{const d=document.createElement('div');d.className='item';d.innerHTML=`<div class="meta"><div class="site">${it.site}</div><div class="user">${it.username||''}</div><div class="notes">${it.notes||''}</div></div>`;const a=document.createElement('div');a.className='actions';const b1=document.createElement('button');b1.textContent='عرض';b1.className='ghost';b1.onclick=()=>alert(`الموقع: ${it.site}\nالمستخدم: ${it.username}\nكلمة المرور: ${it.password}\n\n${it.notes}`);const b2=document.createElement('button');b2.textContent='نسخ';b2.className='ghost';b2.onclick=()=>navigator.clipboard.writeText(it.password);const b3=document.createElement('button');b3.textContent='تعديل';b3.className='ghost';b3.onclick=()=>{editIndex=i;site.value=it.site;username.value=it.username;password.value=it.password;notes.value=it.notes;};const b4=document.createElement('button');b4.textContent='حذف';b4.className='warn';b4.onclick=()=>{if(confirm('هل تريد الحذف؟')){entries.splice(i,1);persist();render();}};[b1,b2,b3,b4].forEach(x=>a.appendChild(x));d.appendChild(a);e.appendChild(d);});}
+unlockBtn.onclick=async()=>{const p=masterInput.value;if(p){let salt=localStorage.getItem(SALT_KEY);if(!salt){salt=b64e(randomBytes(16));localStorage.setItem(SALT_KEY,salt);}await load(p);}else await load();formPanel.style.display='block';listPanel.style.display='block';status.textContent=p?'مفتوح (مشفّر)':'مفتوح (بدون تشفير)';render();};
+lockBtn.onclick=()=>{entries=[];formPanel.style.display='none';listPanel.style.display='none';status.textContent='مقفل';};
+entryForm.onsubmit=async e=>{e.preventDefault();const it={site:site.value,username:username.value,password:password.value,notes:notes.value,createdAt:new Date().toISOString()};if(editIndex>=0){entries[editIndex]=it;editIndex=-1;}else entries.unshift(it);await persist();entryForm.reset();render();};
+genBtn.onclick=()=>{const c='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()';let o='';const a=new Uint32Array(16);crypto.getRandomValues(a);for(let i=0;i<a.length;i++)o+=c[a[i]%c.length];password.value=o;};
+copyPwd.onclick=()=>navigator.clipboard.writeText(password.value);
+clearStorage.onclick=()=>{if(confirm('سيتم حذف كل البيانات المحلية')){localStorage.clear();entries=[];render();alert('تم الحذف');}};
+filterSelect.onchange=render;
+</script>
+</body>
+</html>
