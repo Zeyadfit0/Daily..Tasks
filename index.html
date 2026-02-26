@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <title>Daily Tasks</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- PWA -->
   <link rel="manifest" href="manifest.json">
 
   <style>
@@ -42,58 +40,13 @@
       box-shadow: 0 25px 60px rgba(0,0,0,0.25);
     }
 
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 22px;
-      color: var(--text);
-    }
-
-    .toggle {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      border: none;
-      cursor: pointer;
-      background: var(--primary);
-      color: #fff;
-    }
-
-    .input-group {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-
-    input {
-      flex: 1;
-      padding: 14px;
-      border-radius: 14px;
-      border: none;
-      outline: none;
-      font-size: 15px;
-      background: #eceefe;
-    }
-
-    body.dark input {
-      background: #2a2f55;
-      color: white;
-    }
-
-    .add-btn {
-      padding: 14px 18px;
-      border-radius: 14px;
-      border: none;
-      cursor: pointer;
-      background: var(--primary);
-      color: white;
-    }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    h1 { margin: 0; font-size: 22px; color: var(--text); }
+    .toggle { width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer; background: var(--primary); color: #fff; }
+    .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
+    input { flex: 1; padding: 14px; border-radius: 14px; border: none; outline: none; font-size: 15px; background: #eceefe; }
+    body.dark input { background: #2a2f55; color: white; }
+    .add-btn { padding: 14px 18px; border-radius: 14px; border: none; cursor: pointer; background: var(--primary); color: white; }
 
     .task {
       background: rgba(0,0,0,0.05);
@@ -104,60 +57,28 @@
       align-items: center;
       margin-bottom: 10px;
       color: var(--text);
+      cursor: grab;
+      transition: 0.2s;
     }
+    .task.dragging { opacity: 0.5; }
+    body.dark .task { background: rgba(255,255,255,0.08); }
+    .task.done { opacity: 0.5; text-decoration: line-through; }
 
-    body.dark .task {
-      background: rgba(255,255,255,0.08);
-    }
-
-    .task.done {
-      opacity: 0.5;
-      text-decoration: line-through;
-    }
-
-    .task-actions button {
-      border: none;
-      border-radius: 8px;
-      padding: 6px 10px;
-      margin-right: 6px;
-      cursor: pointer;
-      color: white;
-    }
-
+    .task-actions button { border: none; border-radius: 8px; padding: 6px 10px; margin-right: 6px; cursor: pointer; color: white; }
     .done-btn { background: #4CAF50; }
     .delete-btn { background: #e74c3c; }
 
-    .progress-box {
-      margin-top: 20px;
-    }
-
-    .progress-bar {
-      height: 14px;
-      background: #ddd;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-
-    .progress {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--primary), var(--secondary));
-      transition: width 0.3s ease;
-    }
-
-    .progress-text {
-      text-align: center;
-      margin-top: 8px;
-      font-size: 14px;
-      color: var(--text);
-    }
+    .progress-box { margin-top: 20px; }
+    .progress-bar { height: 14px; background: #ddd; border-radius: 10px; overflow: hidden; }
+    .progress { height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: width 0.3s ease; }
+    .progress-text { text-align: center; margin-top: 8px; font-size: 14px; color: var(--text); }
   </style>
 </head>
 
 <body>
   <div class="app">
     <div class="header">
-      <h1>📅 Daily Tasks</h1>
+      <h1> 💫 Daily Tasks</h1>
       <button class="toggle" onclick="toggleDark()">🌙</button>
     </div>
 
@@ -177,17 +98,7 @@
   </div>
 
   <script>
-    const today = new Date().toDateString();
-
-    let data = JSON.parse(localStorage.getItem('dailyData')) || {
-      date: today,
-      tasks: []
-    };
-
-    if (data.date !== today) {
-      data = { date: today, tasks: [] };
-      save();
-    }
+    let data = JSON.parse(localStorage.getItem('dailyData')) || { tasks: [] };
 
     function save() {
       localStorage.setItem('dailyData', JSON.stringify(data));
@@ -201,6 +112,8 @@
       data.tasks.forEach((task, i) => {
         const div = document.createElement('div');
         div.className = 'task' + (task.done ? ' done' : '');
+        div.draggable = true;
+        div.dataset.index = i;
 
         div.innerHTML = `
           <span>${task.text}</span>
@@ -213,6 +126,7 @@
         list.appendChild(div);
       });
 
+      enableDrag();
       updateProgress();
     }
 
@@ -227,7 +141,7 @@
     }
 
     function finishTask(i) {
-      data.tasks[i].done = true;
+      data.tasks[i].done = !data.tasks[i].done;
       save();
       render();
     }
@@ -251,6 +165,32 @@
     function toggleDark() {
       document.body.classList.toggle('dark');
       save();
+    }
+
+    function enableDrag() {
+      const tasks = document.querySelectorAll('.task');
+      let draggedIndex = null;
+
+      tasks.forEach(task => {
+        task.addEventListener('dragstart', e => {
+          draggedIndex = +task.dataset.index;
+          task.classList.add('dragging');
+        });
+
+        task.addEventListener('dragend', () => {
+          task.classList.remove('dragging');
+        });
+
+        task.addEventListener('dragover', e => e.preventDefault());
+
+        task.addEventListener('drop', e => {
+          const targetIndex = +task.dataset.index;
+          const draggedItem = data.tasks.splice(draggedIndex, 1)[0];
+          data.tasks.splice(targetIndex, 0, draggedItem);
+          save();
+          render();
+        });
+      });
     }
 
     if (localStorage.getItem('dark') === 'true') {
