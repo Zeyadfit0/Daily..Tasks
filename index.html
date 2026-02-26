@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <title>Daily Tasks</title>
+  <title> Daily tasks </title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="manifest" href="manifest.json">
 
@@ -14,88 +14,79 @@
       --primary: #5b6cff;
       --secondary: #8f9bff;
     }
-
-    body.dark {
-      --bg: #0f1220;
-      --card: #1b1f3a;
-      --text: #f1f1f1;
-    }
-
+    body.dark { --bg: #0f1220; --card: #1b1f3a; --text: #f1f1f1; }
     body {
-      margin: 0;
-      min-height: 100vh;
-      background: var(--bg);
+      margin: 0; min-height: 100vh; background: var(--bg);
       font-family: 'Segoe UI', Tahoma, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      display: flex; justify-content: center; align-items: flex-start; padding: 20px;
     }
-
-    .app {
-      width: 100%;
-      max-width: 420px;
-      background: var(--card);
-      border-radius: 24px;
-      padding: 24px;
-      box-shadow: 0 25px 60px rgba(0,0,0,0.25);
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-    }
-
-    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .app { width: 100%; max-width: 480px; background: var(--card); border-radius: 24px;
+      padding: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.25); display: flex; flex-direction: column; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; }
     h1 { margin: 0; font-size: 22px; color: var(--text); }
     .toggle { width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer; background: var(--primary); color: #fff; }
-    .input-group { display: flex; gap: 10px; margin-bottom: 20px; }
-    input { flex: 1; padding: 14px; border-radius: 14px; border: none; outline: none; font-size: 15px; background: #eceefe; }
-    body.dark input { background: #2a2f55; color: white; }
-    .add-btn { padding: 14px 18px; border-radius: 14px; border: none; cursor: pointer; background: var(--primary); color: white; }
-
-    .task {
-      background: rgba(0,0,0,0.05);
-      padding: 14px;
-      border-radius: 14px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 10px;
-      color: var(--text);
-      cursor: grab;
-      transition: 0.2s;
-    }
+    .input-group { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+    input, select { flex: 1; padding: 12px; border-radius: 14px; border: none; outline: none; font-size: 15px; background: #eceefe; }
+    body.dark input, body.dark select { background: #2a2f55; color: white; }
+    .add-btn { padding: 12px 18px; border-radius: 14px; border: none; cursor: pointer; background: var(--primary); color: white; }
+    .task { background: rgba(0,0,0,0.05); padding: 12px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; color: var(--text); cursor: grab; transition: 0.2s; word-break: break-word; }
     .task.dragging { opacity: 0.5; }
     body.dark .task { background: rgba(255,255,255,0.08); }
     .task.done { opacity: 0.5; text-decoration: line-through; }
-
-    .task-actions button { border: none; border-radius: 8px; padding: 6px 10px; margin-right: 6px; cursor: pointer; color: white; }
+    .task-actions { display: flex; gap: 6px; }
+    .task-actions button { border: none; border-radius: 8px; padding: 5px 10px; cursor: pointer; color: white; }
     .done-btn { background: #4CAF50; }
     .delete-btn { background: #e74c3c; }
-
     .progress-box { margin-top: 20px; }
     .progress-bar { height: 14px; background: #ddd; border-radius: 10px; overflow: hidden; }
     .progress { height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: width 0.3s ease; }
     .progress-text { text-align: center; margin-top: 8px; font-size: 14px; color: var(--text); }
-
-    .footer {
-      text-align: center;
-      margin-top: 20px;
-      font-size: 12px;
-      color: var(--text);
-      opacity: 0.7;
-    }
+    .clear-buttons { display: flex; gap: 10px; margin-top: 10px; justify-content: center; flex-wrap: wrap; }
+    .footer { text-align: center; margin-top: 20px; font-size: 12px; color: var(--text); opacity: 0.7; }
     body.dark .footer { color: #ccc; }
   </style>
 </head>
-
 <body>
   <div class="app">
     <div class="header">
-      <h1> 💫 Daily Tasks</h1>
+      <h1> Daily Tasks 💫 </h1>
       <button class="toggle" onclick="toggleDark()">🌙</button>
     </div>
 
     <div class="input-group">
-      <input id="taskInput" placeholder="اكتب التاسك" />
+      <select id="monthSelect" onchange="render()">
+        <option value="يناير">يناير</option>
+        <option value="فبراير">فبراير</option>
+        <option value="مارس">مارس</option>
+        <option value="أبريل">أبريل</option>
+        <option value="مايو">مايو</option>
+        <option value="يونيو">يونيو</option>
+        <option value="يوليو">يوليو</option>
+        <option value="أغسطس">أغسطس</option>
+        <option value="سبتمبر">سبتمبر</option>
+        <option value="أكتوبر">أكتوبر</option>
+        <option value="نوفمبر">نوفمبر</option>
+        <option value="ديسمبر">ديسمبر</option>
+      </select>
+
+      <select id="weekSelect" onchange="render()">
+        <option value="أسبوع 1">أسبوع 1</option>
+        <option value="أسبوع 2">أسبوع 2</option>
+        <option value="أسبوع 3">أسبوع 3</option>
+        <option value="أسبوع 4">أسبوع 4</option>
+      </select>
+
+      <select id="daySelect" onchange="render()">
+        <option value="السبت">السبت</option>
+        <option value="الأحد">الأحد</option>
+        <option value="الاثنين">الاثنين</option>
+        <option value="الثلاثاء">الثلاثاء</option>
+        <option value="الأربعاء">الأربعاء</option>
+        <option value="الخميس">الخميس</option>
+        <option value="الجمعة">الجمعة</option>
+      </select>
+
+      <input id="taskInput" placeholder="اكتب المهمة" />
       <button class="add-btn" onclick="addTask()">+</button>
     </div>
 
@@ -108,36 +99,47 @@
       <div class="progress-text" id="progressText">0% إنجاز</div>
     </div>
 
-    <!-- Footer -->
-    <div class="footer">created by Zeyad Ahmed ⚡</div>
+    <div class="clear-buttons">
+      <button class="add-btn" onclick="clearDay()">مسح هذا اليوم</button>
+      <button class="add-btn" onclick="clearAll()">مسح كل الأيام</button>
+    </div>
+
+    <div class="footer">تم الإنشاء بواسطة Zeyad Ahmed ⚡</div>
   </div>
 
   <script>
-    let data = JSON.parse(localStorage.getItem('dailyData')) || { tasks: [] };
+    let data = JSON.parse(localStorage.getItem('monthlyData')) || { months:{} };
 
     function save() {
-      localStorage.setItem('dailyData', JSON.stringify(data));
+      localStorage.setItem('monthlyData', JSON.stringify(data));
       localStorage.setItem('dark', document.body.classList.contains('dark'));
     }
 
     function render() {
+      const month = document.getElementById('monthSelect').value;
+      const week = document.getElementById('weekSelect').value;
+      const day = document.getElementById('daySelect').value;
       const list = document.getElementById('taskList');
       list.innerHTML = '';
 
-      data.tasks.forEach((task, i) => {
+      if(!data.months[month]) data.months[month] = {};
+      if(!data.months[month][week]) data.months[month][week] = {};
+      if(!data.months[month][week][day]) data.months[month][week][day] = [];
+
+      const tasks = data.months[month][week][day];
+
+      tasks.forEach((task,i)=>{
         const div = document.createElement('div');
-        div.className = 'task' + (task.done ? ' done' : '');
+        div.className = 'task'+(task.done?' done':'');
         div.draggable = true;
         div.dataset.index = i;
-
         div.innerHTML = `
           <span>${task.text}</span>
           <div class="task-actions">
-            <button class="done-btn" onclick="finishTask(${i})">✔</button>
-            <button class="delete-btn" onclick="deleteTask(${i})">🗑</button>
+            <button class="done-btn" onclick="finishTask(${i},'${month}','${week}','${day}')">✔</button>
+            <button class="delete-btn" onclick="deleteTask(${i},'${month}','${week}','${day}')">🗑</button>
           </div>
         `;
-
         list.appendChild(div);
       });
 
@@ -145,77 +147,99 @@
       updateProgress();
     }
 
-    function addTask() {
+    function addTask(){
+      const month = document.getElementById('monthSelect').value;
+      const week = document.getElementById('weekSelect').value;
+      const day = document.getElementById('daySelect').value;
       const input = document.getElementById('taskInput');
-      if (!input.value.trim()) return;
+      if(!input.value.trim()) return;
 
-      data.tasks.push({ text: input.value, done: false });
-      input.value = '';
+      if(!data.months[month]) data.months[month] = {};
+      if(!data.months[month][week]) data.months[month][week] = {};
+      if(!data.months[month][week][day]) data.months[month][week][day] = [];
+      data.months[month][week][day].push({text: input.value, done:false});
+      input.value='';
       save();
       render();
     }
 
-    function finishTask(i) {
-      data.tasks[i].done = !data.tasks[i].done;
+    function finishTask(i,month,week,day){
+      data.months[month][week][day][i].done = !data.months[month][week][day][i].done;
       save();
       render();
     }
 
-    function deleteTask(i) {
-      data.tasks.splice(i, 1);
+    function deleteTask(i,month,week,day){
+      data.months[month][week][day].splice(i,1);
       save();
       render();
     }
 
-    function updateProgress() {
-      const done = data.tasks.filter(t => t.done).length;
-      const percent = data.tasks.length
-        ? Math.round((done / data.tasks.length) * 100)
-        : 0;
-
-      document.getElementById('progress').style.width = percent + '%';
-      document.getElementById('progressText').innerText = percent + '% إنجاز';
+    function updateProgress(){
+      const month = document.getElementById('monthSelect').value;
+      const week = document.getElementById('weekSelect').value;
+      const day = document.getElementById('daySelect').value;
+      const tasks = data.months[month]?.[week]?.[day] || [];
+      const done = tasks.filter(t=>t.done).length;
+      const percent = tasks.length? Math.round((done/tasks.length)*100):0;
+      document.getElementById('progress').style.width = percent+'%';
+      document.getElementById('progressText').innerText = percent+'% إنجاز';
     }
 
-    function toggleDark() {
+    function toggleDark(){
       document.body.classList.toggle('dark');
       save();
     }
 
-    function enableDrag() {
+    function enableDrag(){
       const tasks = document.querySelectorAll('.task');
-      let draggedIndex = null;
-
-      tasks.forEach(task => {
-        task.addEventListener('dragstart', e => {
-          draggedIndex = +task.dataset.index;
+      let draggedIndex=null;
+      tasks.forEach(task=>{
+        task.addEventListener('dragstart',e=>{
+          draggedIndex=+task.dataset.index;
           task.classList.add('dragging');
         });
-
-        task.addEventListener('dragend', () => {
-          task.classList.remove('dragging');
-        });
-
-        task.addEventListener('dragover', e => e.preventDefault());
-
-        task.addEventListener('drop', e => {
+        task.addEventListener('dragend',()=>{ task.classList.remove('dragging'); });
+        task.addEventListener('dragover', e=> e.preventDefault());
+        task.addEventListener('drop', e=>{
+          const month = document.getElementById('monthSelect').value;
+          const week = document.getElementById('weekSelect').value;
+          const day = document.getElementById('daySelect').value;
           const targetIndex = +task.dataset.index;
-          const draggedItem = data.tasks.splice(draggedIndex, 1)[0];
-          data.tasks.splice(targetIndex, 0, draggedItem);
+          const draggedItem = data.months[month][week][day].splice(draggedIndex,1)[0];
+          data.months[month][week][day].splice(targetIndex,0,draggedItem);
           save();
           render();
         });
       });
     }
 
-    if (localStorage.getItem('dark') === 'true') {
+    function clearDay(){
+      const month = document.getElementById('monthSelect').value;
+      const week = document.getElementById('weekSelect').value;
+      const day = document.getElementById('daySelect').value;
+      if(data.months[month]?.[week]) delete data.months[month][week][day];
+      save();
+      render();
+    }
+
+    function clearAll(){
+      data.months={};
+      save();
+      render();
+    }
+
+    if(localStorage.getItem('dark')==='true'){
       document.body.classList.add('dark');
     }
 
     render();
 
+    // ✅ Service Worker registration
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
+      navigator.serviceWorker.register('sw.js').then(() => {
+        console.log('Service Worker registered');
+      });
     }
   </script>
 </body>
