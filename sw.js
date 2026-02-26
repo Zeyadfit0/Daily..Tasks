@@ -1,15 +1,40 @@
-self.addEventListener('install', event => {
+const CACHE_NAME = "daily-task-cache-v2"; // غير الرقم كل مرة تعدل
+
+self.addEventListener("install", event => {
+  self.skipWaiting(); // يجبره يحدث فوراً
+
   event.waitUntil(
-    caches.open('daily-task-cache').then(cache => {
-      return cache.addAll(['./']);
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(["./"]);
     })
   );
 });
 
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
-    })
+self.addEventListener("activate", event => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.map(key => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key); // يمسح الكاش القديم
+          }
+        })
+      )
+    )
   );
+
+  self.clients.claim();
+});
+
+self.addEventListener("fetch", event => {
+  event.respondWith(
+    fetch(event.request).catch(() => caches.match(event.request))
+  );
+});
+
+// 👇 ده مهم عشان الكود اللي حطيته في index يشتغل
+self.addEventListener("message", event => {
+  if (event.data.action === "skipWaiting") {
+    self.skipWaiting();
+  }
 });
