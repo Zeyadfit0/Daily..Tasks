@@ -180,11 +180,22 @@
       render();
     }
 
-    function finishTask(i,month,week,day){
-      data.months[month][week][day][i].done = !data.months[month][week][day][i].done;
-      save();
-      render();
-    }
+    function finishTask(i, month, week, day) {
+  const tasks = data.months[month][week][day];
+  const task = tasks[i];
+
+  task.done = !task.done;
+
+  if (task.done) {
+    // شيل التاسك من مكانه
+    tasks.splice(i, 1);
+    // نزله تحت خالص
+    tasks.push(task);
+  }
+
+  save();
+  render();
+}
 
     function deleteTask(i,month,week,day){
       data.months[month][week][day].splice(i,1);
