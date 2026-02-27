@@ -1,4 +1,4 @@
-const CACHE_NAME = "daily-task-cache-v3"; // غير الرقم كل مرة تعدل
+const CACHE_NAME = "daily-task-cache-v4"; // غير الرقم كل مرة تعدل
 
 self.addEventListener("install", event => {
   self.skipWaiting(); // يجبره يحدث فوراً
